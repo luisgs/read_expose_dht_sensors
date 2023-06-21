@@ -1,0 +1,9 @@
+[Unit]
+Description=DHT and Netatmo temperature service
+After=multi-user.target
+[Service]
+Type=simple
+Restart=on-failure
+ExecStart=sh -c "/usr/bin/python3 /home/luisgs/Documents/rpi_sensors/DHT_rpi_sensor.py 4 INTERNAL 30 8000 & /usr/bin/python3 /home/luisgs/Documents/rpi_sensors/DHT_rpi_sensor.py 17 EXTERNAL 30 8001 & /usr/bin/python3 /home/luisgs/Documents/rpi_sensors/NETATMO_prometheus.py"
+[Install]
+WantedBy=multi-user.target
