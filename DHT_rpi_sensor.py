@@ -7,7 +7,6 @@ import adafruit_dht
 import board
 
 from prometheus_client import Gauge, start_http_server
-from systemd.journal import JournalHandler
 
 # Setup logging to the Systemd Journal
 formatter = "%(asctime)s;%(levelname)s;%(message)s"
