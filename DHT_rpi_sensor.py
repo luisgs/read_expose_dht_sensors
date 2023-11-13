@@ -3,16 +3,15 @@ import sys
 import logging
 import time
 
-import Adafruit_DHT
+import adafruit_dht 
+import board
 
 from prometheus_client import Gauge, start_http_server
 from systemd.journal import JournalHandler
 
 # Setup logging to the Systemd Journal
-log = logging.getLogger('dht22_sensor')
-log.addHandler(JournalHandler())
-log.setLevel(logging.INFO)
-
+formatter = "%(asctime)s;%(levelname)s;%(message)s"
+logging.basicConfig(format=formatter, stream=sys.stdout, level=logging.DEBUG)
 
 ################
 ### Read DHT22 sensors at RPi and expose it via HTTP
@@ -40,8 +39,8 @@ else:
 
 # Initialize the DHT22 sensor
 # Read data from GPIO4 pin on the Raspberry Pi
-SENSOR = Adafruit_DHT.DHT22
 SENSOR_PIN = PIN
+SENSOR = adafruit_dht.DHT22(board.D17, use_pulseio=False)
 
 # The time in seconds between sensor reads
 READ_INTERVAL = read_interval 
@@ -58,22 +57,33 @@ gt.labels('celsius')
 
 # Variable that contains previous temp value,
 # We initialize them
-old_humidity, old_temperature = Adafruit_DHT.read_retry(SENSOR, SENSOR_PIN) 
+try:
+    old_humidity = SENSOR.humidity 
+    old_temperature = SENSOR.temperature 
+except RunTimeError as e:
+    # GPIO access may require sudo permissions
+    # Other RuntimeError exceptions may occur, but
+    # are common.  Just try again.
+    logging.error("RuntimeError: {}".format(e))
+#while old_humidity is None and old_temperature is None:
+#    old_humidity = SENSOR.humidity 
+#    old_temperature = SENSOR.temperature 
 
-while old_humidity is None and old_temperature is None:
-    old_humidity, old_temperature = Adafruit_DHT.read_retry(SENSOR, SENSOR_PIN) 
 
 def read_sensor():
     global old_humidity
     global old_temperature
+    global SENSOR
 
     try:
-        humidity, temperature = Adafruit_DHT.read_retry(SENSOR, SENSOR_PIN)
+        humidity = SENSOR.humidity 
+        temperature = SENSOR.temperature 
+        # logging.info("Temp:{0:0.1f}*C, Humidity: {1:0.1f}%".format(temperature, humidity))
     except RuntimeError as e:
         # GPIO access may require sudo permissions
         # Other RuntimeError exceptions may occur, but
         # are common.  Just try again.
-        log.error("RuntimeError: {}".format(e))
+        logging.error("RuntimeError: {}".format(e))
 
     if (humidity is not None and temperature is not None and
             old_humidity is not None and old_temperature is not None):
@@ -91,8 +101,9 @@ def read_sensor():
             gt.labels('celsius').set(round(old_temperature, 2))
 #       gt.labels('fahrenheit').set(celsius_to_fahrenheit(temperature))
 
-        log.info("Temp:{0:0.1f}*C, Humidity: {1:0.1f}%".format(temperature, humidity))
+        logging.info("Temp:{0:0.1f}*C, Humidity: {1:0.1f}%".format(temperature, humidity))
 
+    logging.info("Going to sleep: " + str(READ_INTERVAL) + "s")
     time.sleep(READ_INTERVAL)
 
 if __name__ == "__main__":
@@ -100,8 +111,10 @@ if __name__ == "__main__":
     # Expose metrics
     # metrics_port = 8000
     start_http_server(metrics_port)
-    print("Serving " + DHT_description + " sensor metrics on :{}".format(metrics_port))
-    log.info("Serving " + DHT_description + " sensor metrics on :{}".format(metrics_port))
+    logging.info("Serving " + DHT_description + " sensor metrics on: {}".format(metrics_port))
 
     while True:
-        read_sensor()
+        try:
+            read_sensor()
+        except Exception as e:
+            logging.error("Function has failed: {}".format(e))
