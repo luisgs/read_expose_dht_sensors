@@ -52,7 +52,7 @@ try:
     #SENSOR = adafruit_dht.DHT22(board.D17, use_pulseio=False)
     SENSOR = adafruit_dht.DHT22(sensors[PIN], use_pulseio=False)
     logging.debug("Reading sensor from PIN: " + (str(PIN)))
-except RunTimeError as e:
+except RuntimeError as e:
     logging.error("RuntimeError: {}".format(e))
 
 # Create Prometheus gauges for humidity and temperature in
@@ -70,11 +70,12 @@ gt.labels('celsius')
 try:
     old_humidity = SENSOR.humidity 
     old_temperature = SENSOR.temperature 
-except RunTimeError as e:
+except RuntimeError as e:
     # GPIO access may require sudo permissions
     # Other RuntimeError exceptions may occur, but
     # are common.  Just try again.
     logging.error("RuntimeError: {}".format(e))
+    exit()
 #while old_humidity is None and old_temperature is None:
 #    old_humidity = SENSOR.humidity 
 #    old_temperature = SENSOR.temperature 
