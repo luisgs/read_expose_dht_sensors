@@ -22,27 +22,38 @@ logging.basicConfig(format=formatter, stream=sys.stdout, level=logging.DEBUG)
 ### python3 script.py PIN_OUT DHT_sensor_Description Readin_Interval TCP_port
 ###########
 
+# Sensors dict:
+sensors = {
+        4: board.D4,
+        17: board.D17,
+}
+
 # Read args
 n = len(sys.argv)
-if (n != 5):
-    print("Please insert valid arguments")
-    print("dht_script PIN DHT_description Read_Interval Port")
-    print("dht_script 4 INTERNAL 30 8000")
+if (n != 4):
+    logging.error("Please insert valid arguments. For example:")
+    logging.error("dht_script PIN Read_Interval Port")
+    logging.error("dht_script 4 30 8000")
     exit()
 else:
     PIN = int(sys.argv[1])  # 4 or 17
-    DHT_description = sys.argv[2]
-    read_interval = int(sys.argv[3])
-    metrics_port = int(sys.argv[4])
+    if PIN not in sensors:
+        logging.error("Sensor PIN is not in list")
+        exit()
+
+    # The time in seconds between sensor reads
+    read_interval = int(sys.argv[2])
+    metrics_port = int(sys.argv[3])
 
 
 # Initialize the DHT22 sensor
 # Read data from GPIO4 pin on the Raspberry Pi
-SENSOR_PIN = PIN
-SENSOR = adafruit_dht.DHT22(board.D17, use_pulseio=False)
-
-# The time in seconds between sensor reads
-READ_INTERVAL = read_interval 
+try:
+    #SENSOR = adafruit_dht.DHT22(board.D17, use_pulseio=False)
+    SENSOR = adafruit_dht.DHT22(sensors[PIN], use_pulseio=False)
+    logging.debug("Reading sensor from PIN: " + (str(PIN)))
+except RunTimeError as e:
+    logging.error("RuntimeError: {}".format(e))
 
 # Create Prometheus gauges for humidity and temperature in
 # Celsius and Fahrenheit
@@ -102,15 +113,14 @@ def read_sensor():
 
         logging.info("Temp:{0:0.1f}*C, Humidity: {1:0.1f}%".format(temperature, humidity))
 
-    logging.info("Going to sleep: " + str(READ_INTERVAL) + "s")
-    time.sleep(READ_INTERVAL)
+    logging.info("Going to sleep: " + str(read_interval) + "s")
+    time.sleep(read_interval)
+
 
 if __name__ == "__main__":
-
     # Expose metrics
-    # metrics_port = 8000
     start_http_server(metrics_port)
-    logging.info("Serving " + DHT_description + " sensor metrics on: {}".format(metrics_port))
+    logging.info("Serving temp and humid's sensor metrics on: {}".format(metrics_port))
 
     while True:
         try:
