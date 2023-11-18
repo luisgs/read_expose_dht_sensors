@@ -1,4 +1,4 @@
-# Exposer DHT22 values via HTTP
+# Read DHT22 values and exposes them via HTTP
 
 [![Build Status](https://travis-ci.org/joemccann/dillinger.svg?branch=master)](https://github.com/luisgs/read_expose_dht_sensors.git)
 
