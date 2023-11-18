@@ -6,6 +6,7 @@ import time
 import adafruit_dht 
 import board
 
+# http server to provide tempand humid data via http
 from prometheus_client import Gauge, start_http_server
 
 # Setup logging to the Systemd Journal
@@ -19,7 +20,7 @@ logging.basicConfig(format=formatter, stream=sys.stdout, level=logging.DEBUG)
 ##########
 ### Usage
 ### python3 script.py [argvs]
-### python3 script.py PIN_OUT DHT_sensor_Description Readin_Interval TCP_port
+### python3 script.py PIN_OUT Readin_Interval(sec) TCP_port
 ###########
 
 # Sensors dict:
@@ -40,7 +41,6 @@ else:
     if PIN not in sensors:
         logging.error("Sensor PIN is not in list")
         exit()
-
     # The time in seconds between sensor reads
     read_interval = int(sys.argv[2])
     metrics_port = int(sys.argv[3])
@@ -49,7 +49,7 @@ else:
 # Initialize the DHT22 sensor
 # Read data from GPIO4 pin on the Raspberry Pi
 try:
-    #SENSOR = adafruit_dht.DHT22(board.D17, use_pulseio=False)
+    # Read values from sensor - GPIo
     SENSOR = adafruit_dht.DHT22(sensors[PIN], use_pulseio=False)
     logging.debug("Reading sensor from PIN: " + (str(PIN)))
 except RuntimeError as e:
@@ -76,9 +76,6 @@ except RuntimeError as e:
     # are common.  Just try again.
     logging.error("RuntimeError: {}".format(e))
     exit()
-#while old_humidity is None and old_temperature is None:
-#    old_humidity = SENSOR.humidity 
-#    old_temperature = SENSOR.temperature 
 
 
 def read_sensor():
