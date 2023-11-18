@@ -1,13 +1,44 @@
-# Exposing DHT22 sensor's value via HTTP for RPI
+# Exposer DHT22 values via HTTP
 
-As the title indicates, this script exposes via HTTP both temperature and humidity values of a DHT22 sensor that is connected to your RPI.
+[![Build Status](https://travis-ci.org/joemccann/dillinger.svg?branch=master)](https://github.com/luisgs/read_expose_dht_sensors.git)
 
-Exposing values via HTTP allows us to read values from prometheus/Grafana for future tracking and monitoring reasons.
+As the title indicates, this is a python script that  exposes via HTTP both temperature and humidity values of a DHT22 sensor that is connected to your RPI's GPIO pins.
 
-It requires argvs:
-> script.py DHT_PIN DHT_sensor_Description Readin_Interval TCP_port
+Final goal is to read these values from Prometheus or Grafana for real tracking, monitoring and archiving reasons.
 
-For example, 
-> script.py 7 DHT_1 30 8000
+## Tech
 
-This repository includes an output for better clarification. 
+Read DHT22 sensors currently uses these technologies:
+
+- Python
+- Adafruit DHT
+- Prometheus Client [Gauge, start_http_server]
+
+## Use
+
+Here is how to execute this script:
+
+```sh
+[sudo] python3 DHT_rpi_sensor.py [GPIO_port] [INTERVAL_seconds] [TCP_port]
+```
+
+```sh
+[sudo] python3 DHT_rpi_sensor.py 17 30 8000
+```
+
+## Docker
+
+Read DHT22 sensor is very easy to install and deploy in a Docker container.
+
+You can find a dockerfile in here
+
+By default, the Docker will expose port 8000, so change this within the
+Dockerfile if necessary or during executition of the docker itself (compose). When ready, simply use the Dockerfile to
+build the image.
+
+More info in the link above.
+
+```sh
+sudo docker build -t dockerfile_dht22 .
+sudo docker run --privileged -v /sys:/sys -e pin=17 -e sleep=30 -dp 0.0.0.0:8040:8000 dockerfile_dht22
+```
