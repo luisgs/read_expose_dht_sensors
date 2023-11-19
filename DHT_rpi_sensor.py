@@ -39,7 +39,7 @@ if (n != 4):
 else:
     PIN = int(sys.argv[1])  # 4 or 17
     if PIN not in sensors:
-        logging.error("Sensor PIN is not in list")
+        logging.error("Sensor GPio PIN is not in list")
         exit()
     # The time in seconds between sensor reads
     read_interval = int(sys.argv[2])
@@ -68,8 +68,8 @@ gt.labels('celsius')
 # Variable that contains previous temp value,
 # We initialize them
 try:
-    old_humidity = SENSOR.humidity 
-    old_temperature = SENSOR.temperature 
+    old_humidity = round(SENSOR.humidity, 2)
+    old_temperature = round(SENSOR.temperature, 2)
 except RuntimeError as e:
     # GPIO access may require sudo permissions
     # Other RuntimeError exceptions may occur, but
@@ -84,8 +84,8 @@ def read_sensor():
     global SENSOR
 
     try:
-        humidity = SENSOR.humidity 
-        temperature = SENSOR.temperature 
+        humidity = round(SENSOR.humidity, 2)
+        temperature = round(SENSOR.temperature, 2)
         # logging.info("Temp:{0:0.1f}*C, Humidity: {1:0.1f}%".format(temperature, humidity))
     except RuntimeError as e:
         # GPIO access may require sudo permissions
@@ -103,10 +103,10 @@ def read_sensor():
             gh.set(old_humidity)
 
         if abs(temperature - old_temperature) < 5:
-            gt.labels('celsius').set(round(temperature, 2))
+            gt.labels('celsius').set(temperature)
             old_temperature = temperature
         else:
-            gt.labels('celsius').set(round(old_temperature, 2))
+            gt.labels('celsius').set(old_temperature)
 #       gt.labels('fahrenheit').set(celsius_to_fahrenheit(temperature))
 
         logging.info("Temp:{0:0.1f}*C, Humidity: {1:0.1f}%".format(temperature, humidity))
